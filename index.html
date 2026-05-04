@@ -357,7 +357,6 @@ function buildLeasingSchedule(debt, term){
 /* ========= RASSROCHKA ========= */
 const TARGET_IRR = 0.32;            // номинальная годовая
 const TARGET_MONTHLY = 0.32 / 12;   // месячная ставка
-const REGISTRATION = 5800498;       // фиксированный регистрационный сбор
 
 function calcIRR(cfs){
   // Возвращает месячную ставку r
@@ -425,9 +424,8 @@ function calculate(){
     // функция подбора
     const solve = (varyMargin) => {
       let margin=0, extra=0;
-      // Формула CF0 = advance - price + (margin_amt / 1.12) - REGISTRATION
-      // где margin_amt = margin * price (margin – доля от цены)
-      const makeCF0 = (marginRate) => advance - price + (marginRate * price) / 1.12 - REGISTRATION;
+      // CF0 = advance - price + (marginAmount / 1.12)   (без регистрации)
+      const makeCF0 = (marginRate) => advance - price + (marginRate * price) / 1.12;
 
       if(varyMargin === 'margin'){        // подбираем только margin (extra=0)
         let lo=0, hi=1, mid;
@@ -438,7 +436,9 @@ function calculate(){
           const mRate = calcIRR(cfs);
           if(isNaN(mRate)) break;
           if(Math.abs(mRate - TARGET_MONTHLY) < 0.0001) break;
-          if(mRate < TARGET_MONTHLY) lo = mid; else hi = mid;
+          // чем выше маржа, тем НИЖЕ IRR → поэтому при высоком IRR увеличиваем маржу
+          if(mRate > TARGET_MONTHLY) lo = mid;
+          else hi = mid;
         }
         margin = ceilTo(mid, 0.001);
         extra = 0;
@@ -446,12 +446,14 @@ function calculate(){
         let lo=0, hi=100000000, mid;
         for(let it=0; it<40; it++){
           mid = (lo+hi)/2;
-          const cfs = [makeCF0(0)]; // margin=0
+          const cfs = [makeCF0(0)];
           for(let i=0; i<term; i++) cfs.push(debt/term + mid);
           const mRate = calcIRR(cfs);
           if(isNaN(mRate)) break;
           if(Math.abs(mRate - TARGET_MONTHLY) < 0.0001) break;
-          if(mRate > TARGET_MONTHLY) hi = mid; else lo = mid;
+          // чем выше extra, тем ВЫШЕ IRR
+          if(mRate > TARGET_MONTHLY) hi = mid;
+          else lo = mid;
         }
         extra = ceilTo(mid, 50000);
         margin = 0;
@@ -465,7 +467,8 @@ function calculate(){
           const mRate = calcIRR(cfs);
           if(isNaN(mRate)) break;
           if(Math.abs(mRate - TARGET_MONTHLY) < 0.0001) break;
-          if(mRate > TARGET_MONTHLY) hi = mid; else lo = mid;
+          if(mRate > TARGET_MONTHLY) hi = mid;
+          else lo = mid;
         }
         extra = ceilTo(mid, 50000);
       }
