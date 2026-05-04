@@ -712,7 +712,7 @@ function buildPrintDoc(r){
     <tr class="${r.mode==='leasing'?'':'pc-alt'}"><td class="pc-lbl">Единовременный процентный платёж</td><td class="pc-mid">${commPct>0?fmtPct(commPct):'-'}</td><td class="pc-val">${commAmt>0?fmt(commAmt):'-'}</td></tr>
     ${extra>0?`<tr><td class="pc-lbl">Ежемесячная надбавка</td><td class="pc-mid"></td><td class="pc-val">${fmt(extra)}</td></tr>`:''}
     <tr><td class="pc-lbl">Стоимость регистрации</td><td class="pc-mid"></td><td class="pc-val">${fmt(REG_FEE)}</td></tr>
-    <tr class="${r.mode==='leasing'?'pc-alt':''}"><td class="pc-lbl">Страхование на весь срок</td><td class="pc-mid">0,16%</td><td class="pc-val">${fmt(insurance)}</td></tr>`;
+    <tr class="${r.mode==='leasing'?'pc-alt':''}"><td class="pc-lbl">Страхование на весь срок</td><td class="pc-mid">0,40%</td><td class="pc-val">${fmt(insurance)}</td></tr>`;
 
   document.getElementById('pdSign').innerHTML=`
     <tr><td class="ps-lbl">Общая сумма к оплате при подписании:</td><td class="ps-val">${fmt(signing)}</td></tr>`;
