@@ -714,7 +714,7 @@ function buildPrintDoc(r){
     (r.calcMode==='commission' ? 'Комиссия' : r.calcMode==='extra' ? 'Доп.платежи' : 'Смешанный') : '';
   document.getElementById('pdCond').innerHTML=`
     <tr class="pd-cond-head"><td colspan="3">Условия лизинга</td></tr>
-    <tr><td class="pc-lbl">Тип графика платежей</td><td class="pc-mid"></td><td class="pc-val">${typeLabel}${modeLabel ? ' / '+modeLabel : ''}</td></tr>
+    <tr><td class="pc-lbl">Тип графика платежей</td><td class="pc-mid"></td><td class="pc-val">${typeLabel}${modeLabel ?}</td></tr>
     <tr class="pc-alt"><td class="pc-lbl">Срок</td><td class="pc-mid">Мес.</td><td class="pc-val">${r.term}</td></tr>
     ${r.mode==='leasing'?`<tr><td class="pc-lbl">Ставка лизинга</td><td class="pc-mid"></td><td class="pc-val">${fmtPct(r.flatRate)}</td></tr>`:''}
     <tr class="${r.mode==='leasing'?'pc-alt':''}"><td class="pc-lbl">Авансовый платёж</td><td class="pc-mid">${(r.advPct*100).toFixed(0)}%</td><td class="pc-val">${fmt(r.advance)}</td></tr>
