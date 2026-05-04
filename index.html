@@ -355,10 +355,12 @@ function buildLeasingSchedule(debt, term){
 }
 
 /* ========= RASSROCHKA ========= */
-const TARGET_IRR = 0.32;
+const TARGET_IRR = 0.32;            // номинальная годовая
+const TARGET_MONTHLY = 0.32 / 12;   // месячная ставка
+const REGISTRATION = 5800498;       // фиксированный регистрационный сбор
 
 function calcIRR(cfs){
-  // cfs[0] отрицательный, остальные положительные
+  // Возвращает месячную ставку r
   let lo = -0.9999, hi = 50;
   let fLo = 0, fHi = 0;
   for(let i=0; i<cfs.length; i++){
@@ -374,7 +376,7 @@ function calcIRR(cfs){
     if(Math.abs(npv) < 0.01) break;
     if(npv > 0) lo = mid; else hi = mid;
   }
-  return (Math.pow(1+mid, 12) - 1); // эффективная годовая
+  return mid; // месячная ставка
 }
 
 function buildRassrochkaSchedule(debt, term, extra){
@@ -423,40 +425,47 @@ function calculate(){
     // функция подбора
     const solve = (varyMargin) => {
       let margin=0, extra=0;
-      if(varyMargin === 'margin'){
+      // Формула CF0 = advance - price + (margin_amt / 1.12) - REGISTRATION
+      // где margin_amt = margin * price (margin – доля от цены)
+      const makeCF0 = (marginRate) => advance - price + (marginRate * price) / 1.12 - REGISTRATION;
+
+      if(varyMargin === 'margin'){        // подбираем только margin (extra=0)
         let lo=0, hi=1, mid;
         for(let it=0; it<40; it++){
           mid = (lo+hi)/2;
-          const cfs = [-(debt) + mid*price];
+          const cfs = [makeCF0(mid)];
           for(let i=0; i<term; i++) cfs.push(debt/term);
-          const irr = calcIRR(cfs);
-          if(Math.abs(irr - TARGET_IRR) < 0.0001) break;
-          if(irr < TARGET_IRR) lo = mid; else hi = mid;
+          const mRate = calcIRR(cfs);
+          if(isNaN(mRate)) break;
+          if(Math.abs(mRate - TARGET_MONTHLY) < 0.0001) break;
+          if(mRate < TARGET_MONTHLY) lo = mid; else hi = mid;
         }
         margin = ceilTo(mid, 0.001);
         extra = 0;
-      } else if(varyMargin === 'extra'){
+      } else if(varyMargin === 'extra'){  // подбираем только extra (margin=0)
         let lo=0, hi=100000000, mid;
         for(let it=0; it<40; it++){
           mid = (lo+hi)/2;
-          const cfs = [-(debt)];
+          const cfs = [makeCF0(0)]; // margin=0
           for(let i=0; i<term; i++) cfs.push(debt/term + mid);
-          const irr = calcIRR(cfs);
-          if(Math.abs(irr - TARGET_IRR) < 0.0001) break;
-          if(irr > TARGET_IRR) hi = mid; else lo = mid;
+          const mRate = calcIRR(cfs);
+          if(isNaN(mRate)) break;
+          if(Math.abs(mRate - TARGET_MONTHLY) < 0.0001) break;
+          if(mRate > TARGET_MONTHLY) hi = mid; else lo = mid;
         }
         extra = ceilTo(mid, 50000);
         margin = 0;
-      } else if(varyMargin === 'mixed'){
+      } else if(varyMargin === 'mixed'){   // margin=5%, подбираем extra
         margin = 0.05;
         let lo=0, hi=100000000, mid;
         for(let it=0; it<40; it++){
           mid = (lo+hi)/2;
-          const cfs = [-(debt) + margin*price];
+          const cfs = [makeCF0(margin)];
           for(let i=0; i<term; i++) cfs.push(debt/term + mid);
-          const irr = calcIRR(cfs);
-          if(Math.abs(irr - TARGET_IRR) < 0.0001) break;
-          if(irr > TARGET_IRR) hi = mid; else lo = mid;
+          const mRate = calcIRR(cfs);
+          if(isNaN(mRate)) break;
+          if(Math.abs(mRate - TARGET_MONTHLY) < 0.0001) break;
+          if(mRate > TARGET_MONTHLY) hi = mid; else lo = mid;
         }
         extra = ceilTo(mid, 50000);
       }
@@ -470,7 +479,7 @@ function calculate(){
       margin: sol.margin, extra: sol.extra,
       commAmt: sol.margin * price,
       schedule, totalPay: advance + schedule._t.pay + sol.margin * price,
-      discountedSum: sol.margin * price // для отображения
+      discountedSum: sol.margin * price
     };
   }
 
