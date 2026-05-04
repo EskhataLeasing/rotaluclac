@@ -8,84 +8,591 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ... весь CSS без изменений ... */
+:root{
+  --blue:#1a4fa0;--blue-l:#2563c7;--accent:#6c63ff;
+  --bg:#eef1f7;--card:#fff;--text:#0f1923;--muted:#6b7a8d;
+  --border:#dde3ed;--shadow:0 2px 16px rgba(26,79,160,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:0 40px;height:60px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;
+  box-shadow:0 1px 8px rgba(26,79,160,.06);
+}
+.logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:var(--text);text-decoration:none}
+.logo-img{height:36px;width:auto;object-fit:contain;flex-shrink:0}
+.logo-icon{width:36px;height:36px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;flex-shrink:0}
+.lang-sw{display:flex;gap:14px}
+.lang-sw a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;cursor:pointer;transition:color .2s}
+.lang-sw a:hover,.lang-sw a.active{color:var(--blue)}
+
+main{max-width:1120px;margin:0 auto;padding:36px 24px 60px}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start}
+.card{background:var(--card);border-radius:16px;padding:28px;box-shadow:var(--shadow)}
+
+/* ── TYPE SWITCHER ── */
+.type-sw{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.type-btn{
+  padding:11px 8px;border:2px solid var(--border);border-radius:10px;
+  background:#f8fafd;font-family:'Manrope',sans-serif;font-size:13px;
+  font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center;
+}
+.type-btn.active{
+  border-color:var(--blue);background:#eef4ff;color:var(--blue);
+}
+
+/* ── MODE SWITCHER (рассрочка) ── */
+.mode-sw{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px}
+.mode-btn{
+  padding:8px 5px;border:1.5px solid var(--border);border-radius:8px;
+  background:#f8fafd;font-family:'Manrope',sans-serif;font-size:12px;
+  font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center;
+}
+.mode-btn.active{
+  border-color:var(--accent);background:#f0edff;color:var(--accent);
+}
+
+/* ── FORM ── */
+.fg{margin-bottom:16px}
+label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=number]{
+  width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:15px;font-family:'Manrope',sans-serif;font-weight:500;color:var(--text);
+  background:#f8fafd;transition:border-color .2s,box-shadow .2s;outline:none;
+}
+input:focus{border-color:var(--blue-l);box-shadow:0 0 0 3px rgba(37,99,199,.1);background:#fff}
+.iw{position:relative}
+.iw input{padding-right:52px}
+.isuf{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);font-weight:600;pointer-events:none}
+
+.btn{width:100%;padding:12px;border:none;border-radius:10px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:5px}
+.btn-p{background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff}
+.btn-p:hover{box-shadow:0 4px 16px rgba(108,99,255,.35);transform:translateY(-1px)}
+.btn-s{background:var(--text);color:#fff}
+.btn-s:hover{background:#1e2a38;transform:translateY(-1px)}
+
+/* ── RESULT CARDS ── */
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.rc{background:#f4f7fb;border-radius:12px;padding:13px 15px;border:1px solid var(--border)}
+.rc.full{grid-column:1/-1}
+.rc.hi{background:#eef4ff;border-color:#c7d8f7}
+.cl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.cv{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px}
+.cs{font-size:11px;color:var(--muted);margin-top:2px;font-weight:500}
+
+/* highlight rows */
+.highlight-row{grid-column:1/-1;border-radius:12px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.highlight-row.comm-row{background:#f0fdf4;border:1px solid #a7f3d0}
+.highlight-row.extra-row{background:#fff7ed;border:1px solid #fcd9a0}
+.highlight-row.reg-row{background:#f8f8ff;border:1px solid #d0d0f0}
+.highlight-row .cl{font-weight:700;margin:0}
+.highlight-row .cv{font-size:18px;font-weight:800}
+
+/* ── SCHEDULE ── */
+.sched-sec{margin-top:22px}
+.sec-title{font-size:15px;font-weight:700;margin-bottom:11px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--blue);color:#fff}
+thead th{padding:9px 11px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:nth-child(even){background:#f8fafd}
+tbody tr:hover{background:#eef4ff}
+tbody td{padding:6px 11px;border-bottom:1px solid #f0f3f8;font-weight:500}
+tbody td:not(:first-child){text-align:right}
+tfoot tr{background:#e8eef8;font-weight:700}
+tfoot td{padding:8px 11px;border-top:2px solid var(--blue)}
+tfoot td:not(:first-child){text-align:right}
+
+.empty-r{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty-r svg{opacity:.3;margin:0 auto 12px;display:block}
+.empty-r p{font-size:14px;font-weight:500}
+
+.act-btns{display:none;margin-top:14px;gap:10px}
+.act-btns.vis{display:flex}
+.btn-print{padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-print:hover{background:var(--blue-l)}
+.btn-exit{display:none;padding:10px 20px;background:#e2e8f0;color:var(--text);border:none;border-radius:8px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+
+/* ── CLIENT MODE ── */
+body.cm header{display:none}
+body.cm main{padding:16px}
+body.cm .form-card{display:none}
+body.cm .grid{grid-template-columns:1fr}
+body.cm .btn-exit{display:inline-block}
+body.cm .int-row{display:none!important}
+body.cm .comm-row{display:none!important}
+body.cm .highlight-row{display:none!important}
+
+.csh{display:none;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--blue)}
+body.cm .csh{display:flex}
+.pt{font-size:18px;font-weight:800}
+.ps{font-size:12px;color:var(--muted);margin-top:2px}
+
+#printDoc{position:absolute;left:-9999px;top:0;width:210mm;visibility:hidden;pointer-events:none}
+
+/* ── MOBILE ── */
+@media(max-width:640px){
+  header{padding:0 16px;height:54px}
+  .logo-icon{width:30px;height:30px;font-size:15px}
+  .lang-sw{gap:10px}
+  main{padding:16px 12px 40px}
+  .grid{grid-template-columns:1fr!important;gap:16px}
+  .card{padding:16px 13px;border-radius:12px}
+  .fg{margin-bottom:12px}
+  input[type=text],input[type=number]{font-size:16px;padding:9px 12px}
+  .btn{padding:11px;font-size:14px}
+  .rg{grid-template-columns:1fr 1fr;gap:8px}
+  .cv{font-size:15px}
+  .sched-sec .card{overflow-x:auto}
+  table{font-size:11px;min-width:280px}
+  thead th{padding:7px 8px;font-size:9px}
+  tbody td{padding:5px 8px}
+  .act-btns{flex-direction:column}
+  .btn-print,.btn-exit{width:100%;text-align:center}
+  .int-row{flex-direction:column;align-items:flex-start;gap:6px}
+  .int-badge{align-self:flex-end}
+}
+@media(min-width:641px) and (max-width:860px){
+  .grid{grid-template-columns:1fr!important}
+  main{padding:24px 16px 50px}
+}
+
+/* ── PRINT ── */
+@media print{
+  @page{size:A4 portrait;margin:8mm 10mm}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body>header,body>main,.act-btns{display:none!important}
+  body{background:#fff;margin:0;padding:0}
+  #printDoc{display:block!important;position:static!important;left:auto!important;top:auto!important;visibility:visible!important;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:8pt;color:#000}
+  .pd-logo-box{display:table;border:1pt solid #1a4fa0;border-radius:4pt;padding:4pt 10pt;margin-bottom:6pt}
+  .pd-logo-inner{display:table-cell;vertical-align:middle}
+  .pd-top{width:100%;border-collapse:collapse;margin-bottom:4pt;font-size:8pt}
+  .pd-top td{padding:3pt 6pt;border:.5pt solid #b0bac8}
+  .pt-lbl{color:#222;width:62%}
+  .pt-val{font-weight:700;text-align:right;font-size:8.5pt}
+  .pd-cond{width:100%;border-collapse:collapse;margin-bottom:4pt;font-size:8pt}
+  .pd-cond-head td{background:#d0daea!important;font-weight:700;text-align:center;padding:3pt 6pt;border:.5pt solid #b0bac8;font-size:8pt}
+  .pd-cond td{padding:3pt 6pt;border:.5pt solid #b0bac8;vertical-align:middle}
+  .pc-lbl{color:#222;width:52%}
+  .pc-mid{color:#555;font-size:7.5pt;text-align:center;width:10%}
+  .pc-val{font-weight:700;text-align:right}
+  .pd-cond .pc-alt td{background:#f0f3f9!important}
+  .pd-sign{width:100%;border-collapse:collapse;margin-bottom:4pt;font-size:8pt}
+  .pd-sign td{padding:3pt 6pt;border:.5pt solid #b0bac8}
+  .ps-lbl{color:#222;font-weight:600;width:62%}
+  .ps-val{font-weight:700;text-align:right;font-size:8.5pt}
+  .pd-debt{width:100%;border-collapse:collapse;margin-bottom:6pt;font-size:8pt}
+  .pd-debt td{padding:3pt 6pt;border:.5pt solid #b0bac8}
+  .pdl{color:#222;width:62%}
+  .pdv{font-weight:700;text-align:right}
+  .pd-sched-wrap{border:.5pt solid #b0bac8}
+  .pd-sched-hd{font-size:8pt;font-weight:700;text-align:center;padding:3pt;background:#eef2f8;border-bottom:.5pt solid #b0bac8}
+  .pd-sched{width:100%;border-collapse:collapse;font-size:7.5pt}
+  .pd-sched thead tr{background:#fff}
+  .pd-sched thead th{color:#333;padding:3pt 5pt;text-align:center;font-weight:600;font-size:7.5pt;border-bottom:.5pt solid #b0bac8;border-right:.5pt solid #d0d8e8}
+  .pd-sched .sched-sub td{font-weight:700;text-align:center;padding:2pt 5pt;font-size:7.5pt;border-bottom:.5pt solid #b0bac8;border-right:.5pt solid #d0d8e8;background:#f8f9fc}
+  .pd-sched .sched-sub td:first-child{text-align:center}
+  .pd-sched tbody td{padding:1.8pt 5pt;border-bottom:.3pt solid #e8ecf2;border-right:.3pt solid #e8ecf2;text-align:center}   /* ← ЦИФРЫ ПО ЦЕНТРУ */
+  .pd-sched tbody td:first-child{text-align:center;color:#333}
+  .pd-sched tbody tr:last-child td{border-bottom:none}
+}
 </style>
 </head>
 <body>
-<!-- ... весь HTML без изменений ... -->
+
+<header>
+  <a class="logo" href="#">
+    <img class="logo-img" src="logo.png" alt="Eskhata Leasing"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="logo-icon" style="display:none">Э</div>
+  </a>
+  <div class="lang-sw">
+    <a class="active" onclick="setLang('ru')">RU</a>
+    <a onclick="setLang('uz')">UZ</a>
+    <a onclick="setLang('en')">ENG</a>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- ФОРМА -->
+    <div class="card form-card">
+
+      <!-- Переключатель типа -->
+      <div class="type-sw">
+        <button class="type-btn active" id="btnRass" onclick="switchType('rassrochka')">
+          Рассрочка
+        </button>
+        <button class="type-btn" id="btnLeas" onclick="switchType('leasing')">
+          Лизинг (аннуитет)
+        </button>
+      </div>
+
+      <!-- Переключатель режима (только для рассрочки) -->
+      <div class="mode-sw" id="modeSwitcher">
+        <button class="mode-btn active" id="btnModeComm" onclick="switchMode('commission')">Комиссия</button>
+        <button class="mode-btn" id="btnModeExtra" onclick="switchMode('extra')">Доп.платежи</button>
+        <button class="mode-btn" id="btnModeMixed" onclick="switchMode('mixed')">Смешанный</button>
+      </div>
+
+      <div class="fg">
+        <label data-i18n="obj_price">Стоимость объекта</label>
+        <input type="text" id="price" oninput="formatInput(this)" placeholder="0">
+      </div>
+
+      <div class="fg">
+        <label data-i18n="advance_pct">Аванс (%)</label>
+        <div class="iw">
+          <input type="number" id="advPct" min="0" max="99" step="1" placeholder="30">
+          <span class="isuf">%</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label data-i18n="term_months">Срок (мес.)</label>
+        <input type="number" id="term" min="1" max="120" step="1" placeholder="24">
+      </div>
+
+      <button class="btn btn-p" onclick="calculate()" data-i18n="calc_btn">Рассчитать</button>
+      <button class="btn btn-s" style="margin-top:8px" onclick="enterCM()" data-i18n="client_btn">Режим для клиента</button>
+    </div>
+
+    <!-- РЕЗУЛЬТАТЫ -->
+    <div id="resultsPanel">
+
+      <div class="csh">
+        <img class="logo-img" src="logo.png" alt="Eskhata Leasing" style="height:40px"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="logo-icon" style="display:none;width:40px;height:40px;font-size:20px">Э</div>
+        <div>
+          <div class="pt">Eskhata Leasing</div>
+          <div class="ps" id="screenSubtitle">График лизинговых платежей</div>
+        </div>
+      </div>
+
+      <div id="resultCards">
+        <div class="empty-r card">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="3" width="20" height="18" rx="3"/><path d="M7 8h10M7 12h6M7 16h4"/>
+          </svg>
+          <p data-i18n="empty_hint">Введите параметры и нажмите «Рассчитать»</p>
+        </div>
+      </div>
+
+      <div id="schedSec" class="sched-sec" style="display:none">
+        <div class="sec-title">График платежей</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table>
+            <thead id="schedHead"></thead>
+            <tbody id="schedBody"></tbody>
+            <tfoot id="schedFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="act-btns" id="actBtns">
+        <button class="btn-print" onclick="doPrint()">🖨 Распечатать</button>
+        <button class="btn-exit" onclick="exitCM()">← Назад</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ПЕЧАТНЫЙ ДОКУМЕНТ -->
+<div id="printDoc">
+  <table class="pd-logo-box" cellpadding="0" cellspacing="0">
+    <tr>
+      <td class="pd-logo-inner">
+        <img src="logo.png" style="height:30pt;width:auto" alt="Eskhata Leasing">
+      </td>
+    </tr>
+  </table>
+  <table class="pd-top"  id="pdTop"></table>
+  <table class="pd-cond" id="pdCond"></table>
+  <table class="pd-sign" id="pdSign"></table>
+  <table class="pd-debt" id="pdDebt"></table>
+  <div class="pd-sched-wrap">
+    <div class="pd-sched-hd">График платежей</div>
+    <table class="pd-sched">
+      <thead id="pdSchedHead"></thead>
+      <tbody id="pdSchedBody"></tbody>
+      <tfoot id="pdSchedFoot"></tfoot>
+    </table>
+  </div>
+</div>
+
 <script>
 /* ══ i18n ══ */
-const L = { /* ... без изменений ... */ };
+const L={
+  ru:{
+    obj_price:'Стоимость объекта',advance_pct:'Аванс (%)',term_months:'Срок (мес.)',
+    calc_btn:'Рассчитать',client_btn:'Режим для клиента',
+    empty_hint:'Введите параметры и нажмите «Рассчитать»',
+  },
+  uz:{
+    obj_price:"Ob'ekt narxi",advance_pct:'Avans (%)',term_months:'Muddat (oy)',
+    calc_btn:'Hisoblash',client_btn:'Mijoz rejimi',
+    empty_hint:'Parametrlarni kiriting va "Hisoblash" ni bosing',
+  },
+  en:{
+    obj_price:'Object price',advance_pct:'Advance (%)',term_months:'Term (months)',
+    calc_btn:'Calculate',client_btn:'Client mode',
+    empty_hint:'Enter parameters and click "Calculate"',
+  }
+};
 let lang='ru';
-function t(k){ return L[lang][k]||k }
-function setLang(l){ /* ... */ }
+function t(k){return L[lang][k]||k}
+
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.getAttribute('data-i18n')));
+  document.querySelectorAll('.lang-sw a').forEach(a=>
+    a.classList.toggle('active',a.textContent===l.toUpperCase()||(l==='en'&&a.textContent==='ENG')));
+  if(R) renderResults(R);
+}
 
 /* ══ Mode & Type ══ */
-let mode='rassrochka';
-let calcMode='commission';
-function switchType(m){ /* ... */ }
-function switchMode(md){ /* ... */ }
-function clearResults(){ /* ... */ }
+let mode='rassrochka';        // 'rassrochka' | 'leasing'
+let calcMode='commission';    // 'commission' | 'extra' | 'mixed'
+
+function switchType(m){
+  mode=m;
+  document.getElementById('btnRass').classList.toggle('active', m==='rassrochka');
+  document.getElementById('btnLeas').classList.toggle('active', m==='leasing');
+  document.getElementById('modeSwitcher').style.display = (m==='rassrochka') ? 'grid' : 'none';
+  clearResults();
+}
+
+function switchMode(md){
+  calcMode=md;
+  document.getElementById('btnModeComm').classList.toggle('active', md==='commission');
+  document.getElementById('btnModeExtra').classList.toggle('active', md==='extra');
+  document.getElementById('btnModeMixed').classList.toggle('active', md==='mixed');
+  clearResults();
+}
+
+function clearResults(){
+  R=null;
+  document.getElementById('resultCards').innerHTML=`<div class="empty-r card">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="2" y="3" width="20" height="18" rx="3"/>
+      <path d="M7 8h10M7 12h6M7 16h4"/>
+    </svg>
+    <p data-i18n="empty_hint">Введите параметры и нажмите «Рассчитать»</p>
+  </div>`;
+  document.getElementById('schedSec').style.display='none';
+  document.getElementById('actBtns').classList.remove('vis');
+}
 
 /* ══ Numbers ══ */
-function formatInput(el){ /* ... */ }
-function parseVal(s){ /* ... */ }
-function fmt(n){ return Math.round(n).toLocaleString('ru-RU'); }
+function formatInput(el){const r=el.value.replace(/[^\d]/g,'');el.value=r?Number(r).toLocaleString('ru-RU'):''}
+function parseVal(s){if(!s)return 0;return parseFloat(String(s).replace(/[^\d.]/g,''))||0}
+function fmt(n){
+  if(n===null||n===undefined)return'—';
+  return Math.round(n).toLocaleString('ru-RU');
+}
 
-// ★ НОВАЯ ФУНКЦИЯ: округление процентов вверх до 0.5%
+// Округление процентов вверх до 0.5%
 function fmtPct(n){
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  const step = 0.005;                     // 0.5% шаг
-  const rounded = Math.ceil(n / step) * step;
-  return (rounded * 100).toLocaleString('ru-RU', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1
-  }) + '%';
+  if(n===null||n===undefined||isNaN(n))return'—';
+  const step=0.005;
+  const rounded=Math.ceil(n/step)*step;
+  return (rounded*100).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
 }
 
 /* ══════════════════════════════
    ОБЩИЕ КОНСТАНТЫ
 ══════════════════════════════ */
-const TARGET_IRR = 0.32;
-const REG_FEE = 5800498;
-const INSURANCE_RATE = 0.004;
+const TARGET_IRR=0.32;            // годовая номинальная IRR
+const REG_FEE=5800498;            // регистрационный сбор
+const INSURANCE_RATE=0.004;     // страхование
 
 /* ══════════════════════════════
    РАССРОЧКА – логика подбора
 ══════════════════════════════ */
-function calcNominalIRR(cfs){ /* ... без изменений ... */ }
-function buildCFs(price, advance, debt, term, discRate, extra){ /* ... */ }
-const DISC_STEP=0.0005, DISC_MAX=0.50;
-function findCommission(price, advance, debt, term){ /* ... */ }
-function findExtra(price, advance, debt, term, baseDisc){ /* ... */ }
+function calcNominalIRR(cfs){
+  let lo=-0.9999,hi=100,npvLo=0,npvHi=0;
+  for(let i=0;i<cfs.length;i++){
+    npvLo+=cfs[i]/Math.pow(1+lo,i);
+    npvHi+=cfs[i]/Math.pow(1+hi,i);
+  }
+  if(npvLo*npvHi>0)return -999;
+  let mid=0;
+  for(let it=0;it<300;it++){
+    mid=(lo+hi)/2;
+    let npv=0;
+    for(let i=0;i<cfs.length;i++)npv+=cfs[i]/Math.pow(1+mid,i);
+    if(Math.abs(npv)<0.01)break;
+    if(npv>0)lo=mid;else hi=mid;
+  }
+  return mid*12;   // номинальная годовая
+}
 
-function buildScheduleRassrochka(debt, term, extra){ /* ... */ }
+function buildCFs(price, advance, debt, term, discRate, extra){
+  const discAmt = price * discRate;
+  const vat = discAmt * 12 / 112;
+  const cf0 = advance - (price - discAmt + vat + REG_FEE);
+  const monthly = debt / term + (extra || 0);
+  const cfs = [cf0];
+  for (let i = 1; i <= term; i++) cfs.push(monthly);
+  return cfs;
+}
+
+const DISC_STEP=0.0005, DISC_MAX=0.50;
+function findCommission(price, advance, debt, term){
+  let d = DISC_STEP;
+  while (d <= DISC_MAX) {
+    const irr = calcNominalIRR(buildCFs(price, advance, debt, term, d, 0));
+    if (irr > 0 && Math.ceil((irr + 1e-7) / 0.0001) * 0.0001 >= TARGET_IRR) {
+      return Math.ceil((d + 1e-7) / 0.0001) * 0.0001;
+    }
+    d = Math.round((d + DISC_STEP) * 1e6) / 1e6;
+  }
+  return -1;
+}
+
+function findExtra(price, advance, debt, term, baseDisc){
+  let lo = 0, hi = 100000000, mid;
+  for (let it = 0; it < 50; it++) {
+    mid = (lo + hi) / 2;
+    const irr = calcNominalIRR(buildCFs(price, advance, debt, term, baseDisc, mid));
+    if (Math.abs(irr - TARGET_IRR) < 0.0001) break;
+    if (irr < TARGET_IRR) lo = mid;
+    else hi = mid;
+  }
+  return Math.ceil((mid + 1e-7) / 50000) * 50000;
+}
+
+function buildScheduleRassrochka(debt, term, extra){
+  const rows=[], mp=debt/term;
+  let bal=debt, totP=0, totT=0;
+  for(let j=1;j<=term;j++){
+    const pr=(j===term)?bal:mp;
+    bal=Math.max(0,bal-pr);
+    totP+=pr; totT+=pr+(extra||0);
+    rows.push({n:j,pay:pr+(extra||0),princ:pr,intr:0,bal,show:true});
+  }
+  rows._t={pay:totT,princ:totP,intr:0};
+  return rows;
+}
 
 /* ══════════════════════════════
    ЛИЗИНГ – аннуитет 29,75%
    Комиссия клиенту: 2,5% (фикс)
 ══════════════════════════════ */
-const LEASING_RATE = 0.2975;
-const LEASING_COMM = 0.025;
+const LEASING_RATE = 0.2975;        // годовая
+const LEASING_COMM = 0.025;         // 2,5%
 
-function buildScheduleLeasing(debt,term){ /* ... */ }
+function buildScheduleLeasing(debt,term){
+  const rate=LEASING_RATE/12;
+  const rows=[];
+  if(term<=0||debt<=0)return rows;
+  let pay, bal=debt;
+  if(Math.abs(rate)<1e-12){pay=debt/term}
+  else{const pv=(1+rate)**term; pay=debt*(rate*pv)/(pv-1)}
+  let totP=0,totI=0,totT=0;
+  for(let i=1;i<=term;i++){
+    const intr=bal*rate;
+    let princ=pay-intr;
+    if(i===term){princ=bal;pay=princ+intr}
+    if(princ<0)princ=0;
+    bal=Math.max(0,bal-princ);
+    totP+=princ;totI+=intr;totT+=pay;
+    rows.push({n:i,pay,princ,intr,bal,show:true});
+  }
+  rows._t={pay:totT,princ:totP,intr:totI};
+  return rows;
+}
 
 /* ══ State ══ */
 let R=null;
 
 /* ══ Calculate ══ */
-function calculate(){ /* ... без изменений ... */ }
-function calcRassrochka(price,advPct,term){ /* ... */ }
-function calcLeasing(price,advPct,term){ /* ... */ }
+function calculate(){
+  const price  =parseVal(document.getElementById('price').value);
+  const advPct =parseVal(document.getElementById('advPct').value)/100;
+  const term   =parseInt(document.getElementById('term').value)||0;
+
+  if(price<=0){alert('Введите стоимость объекта');return}
+  if(term<=0){alert('Введите срок');return}
+
+  if(mode==='rassrochka'){
+    calcRassrochka(price,advPct,term);
+  } else {
+    calcLeasing(price,advPct,term);
+  }
+}
+
+function calcRassrochka(price,advPct,term){
+  if(advPct<=0||advPct>=1){alert('Введите корректный аванс (1–99%)');return}
+  const advance=price*advPct, debt=price-advance;
+
+  let disc=0, extra=0;
+  if (calcMode==='commission'){
+    disc = findCommission(price, advance, debt, term);
+    if (disc<0){ alert('Не удалось подобрать комиссию.'); return; }
+  } else if (calcMode==='extra'){
+    extra = findExtra(price, advance, debt, term, 0);
+  } else if (calcMode==='mixed'){
+    disc = 0.05;
+    extra = findExtra(price, advance, debt, term, disc);
+  }
+
+  const discAmt = disc * price;
+  const schedule = buildScheduleRassrochka(debt, term, extra);
+  const insurance = price * INSURANCE_RATE * (term / 12);
+  const totalPay = advance + schedule._t.pay + discAmt + insurance + REG_FEE;
+
+  R={
+    mode:'rassrochka', price, advance, advPct, debt, term,
+    calcMode, disc, discAmt, extra,
+    insurance, totalPay, schedule
+  };
+  renderResults(R);
+}
+
+function calcLeasing(price,advPct,term){
+  const base = price + REG_FEE;
+  const advance = base * advPct;
+  const debt = base - advance;
+  const commAmt = base * LEASING_COMM;   // 2,5%
+  const insurance = price * INSURANCE_RATE * (term / 12);
+  const schedule = buildScheduleLeasing(debt,term);
+  const tot = schedule._t || {pay:0,princ:0,intr:0};
+  const flatRate = (tot.intr && debt>0 && term>0) ? tot.intr/(debt*term/12) : 0;
+  const totalPay = advance + tot.pay;
+  const signing = advance + commAmt + insurance;
+
+  R={
+    mode:'leasing', price, advance, advPct, debt, term,
+    commPct:LEASING_COMM, commAmt, insurance,
+    schedule, tot, totalPay, flatRate, signing
+  };
+  renderResults(R);
+}
 
 /* ══ Render screen ══ */
 function renderResults(r){
   let cardsHTML='';
   if(r.mode==='rassrochka'){
-    cardsHTML = `
-      <div class="rc"><div class="cl">Долг лизинга</div><div class="cv">${fmt(r.debt)}</div></div>
-      <div class="rc"><div class="cl">Аванс</div><div class="cv">${fmt(r.advance)}</div><div class="cs">${(r.advPct*100).toFixed(0)}%</div></div>
-      <div class="rc full"><div class="cl">Общая сумма оплаты</div><div class="cv">${fmt(r.totalPay)}</div></div>`;
+    cardsHTML=`
+      <div class="rc">
+        <div class="cl">Долг лизинга</div>
+        <div class="cv">${fmt(r.debt)}</div>
+      </div>
+      <div class="rc">
+        <div class="cl">Аванс</div>
+        <div class="cv">${fmt(r.advance)}</div>
+        <div class="cs">${(r.advPct*100).toFixed(0)}%</div>
+      </div>
+      <div class="rc full">
+        <div class="cl">Общая сумма оплаты</div>
+        <div class="cv">${fmt(r.totalPay)}</div>
+      </div>`;
+
     if (r.calcMode === 'commission'){
       cardsHTML += `
       <div class="highlight-row comm-row">
@@ -111,50 +618,71 @@ function renderResults(r){
         <div class="cv">${fmt(r.extra)}</div>
       </div>`;
     }
-    // график рассрочки
-    document.getElementById('schedHead').innerHTML = `<tr><th>№</th><th>Сумма платежа</th><th>Остаток долга</th></tr>`;
-    const tbody = document.getElementById('schedBody');
-    tbody.innerHTML = '';
-    r.schedule.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.bal)}</td>`;
+
+    // График
+    document.getElementById('schedHead').innerHTML=`<tr><th>№</th><th>Сумма платежа</th><th>Остаток долга</th></tr>`;
+    const tbody=document.getElementById('schedBody');
+    tbody.innerHTML='';
+    r.schedule.forEach(row=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.bal)}</td>`;
       tbody.appendChild(tr);
     });
-    document.getElementById('schedFoot').innerHTML = `<tr><td>Итого</td><td>${fmt(r.schedule._t.pay)}</td><td>—</td></tr>`;
+    document.getElementById('schedFoot').innerHTML=
+      `<tr><td>Итого</td><td>${fmt(r.schedule._t.pay)}</td><td>—</td></tr>`;
+
   } else { // leasing
-    cardsHTML = `
-      <div class="rc"><div class="cl">Долг лизинга</div><div class="cv">${fmt(r.debt)}</div></div>
+    cardsHTML=`
+      <div class="rc">
+        <div class="cl">Долг лизинга</div>
+        <div class="cv">${fmt(r.debt)}</div>
+      </div>
       <div class="highlight-row comm-row">
         <div class="cl">Единовременный процентный платеж</div>
         <div class="cv">${fmtPct(r.commPct)}</div>
         <div>${fmt(r.commAmt)}</div>
       </div>
-      <div class="rc"><div class="cl">Аванс</div><div class="cv">${fmt(r.advance)}</div><div class="cs">${(r.advPct*100).toFixed(0)}%</div></div>
-      <div class="rc"><div class="cl">Общая сумма оплаты</div><div class="cv">${fmt(r.totalPay)}</div></div>
-      <div class="rc"><div class="cl">Ставка лизинга</div><div class="cv">${fmtPct(r.flatRate)}</div></div>`;
-    // график лизинга
-    document.getElementById('schedHead').innerHTML = `<tr><th>№</th><th>Платёж</th><th>Осн. долг</th><th>Проценты</th><th>Остаток долга</th></tr>`;
-    const tbody = document.getElementById('schedBody');
-    tbody.innerHTML = '';
-    r.schedule.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.princ)}</td><td>${fmt(row.intr)}</td><td>${fmt(row.bal)}</td>`;
+      <div class="rc">
+        <div class="cl">Аванс</div>
+        <div class="cv">${fmt(r.advance)}</div>
+        <div class="cs">${(r.advPct*100).toFixed(0)}%</div>
+      </div>
+      <div class="rc">
+        <div class="cl">Общая сумма оплаты</div>
+        <div class="cv">${fmt(r.totalPay)}</div>
+      </div>
+      <div class="rc">
+        <div class="cl">Ставка лизинга</div>
+        <div class="cv">${fmtPct(r.flatRate)}</div>
+      </div>`;
+
+    document.getElementById('schedHead').innerHTML=`<tr><th>№</th><th>Платёж</th><th>Осн. долг</th><th>Проценты</th><th>Остаток долга</th></tr>`;
+    const tbody=document.getElementById('schedBody');
+    tbody.innerHTML='';
+    r.schedule.forEach(row=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.princ)}</td><td>${fmt(row.intr)}</td><td>${fmt(row.bal)}</td>`;
       tbody.appendChild(tr);
     });
-    const tot = r.tot;
-    document.getElementById('schedFoot').innerHTML = `<tr><td>Итого</td><td>${fmt(tot.pay)}</td><td>${fmt(tot.princ)}</td><td>${fmt(tot.intr)}</td><td>—</td></tr>`;
+    const tot=r.tot;
+    document.getElementById('schedFoot').innerHTML=
+      `<tr><td>Итого</td><td>${fmt(tot.pay)}</td><td>${fmt(tot.princ)}</td><td>${fmt(tot.intr)}</td><td>—</td></tr>`;
   }
 
-  document.getElementById('resultCards').innerHTML = `<div class="card" style="margin-bottom:11px"><div class="rg">${cardsHTML}</div></div>`;
-  document.getElementById('schedSec').style.display = 'block';
+  document.getElementById('resultCards').innerHTML=`
+    <div class="card" style="margin-bottom:11px">
+      <div class="rg">${cardsHTML}</div>
+    </div>`;
+
+  document.getElementById('schedSec').style.display='block';
   document.getElementById('actBtns').classList.add('vis');
-  document.getElementById('screenSubtitle').textContent = 'График лизинговых платежей';
+  document.getElementById('screenSubtitle').textContent='График лизинговых платежей';
 }
 
 /* ══ Print doc ══ */
 function buildPrintDoc(r){
-  let commPct = 0, commAmt = 0, extra = 0;
-  if (r.mode === 'rassrochka'){
+  let commPct=0, commAmt=0, extra=0;
+  if (r.mode==='rassrochka'){
     commPct = r.disc || 0;
     commAmt = r.discAmt || 0;
     extra = r.extra || 0;
@@ -166,14 +694,14 @@ function buildPrintDoc(r){
   const signing = r.advance + commAmt + insurance + (r.mode==='rassrochka' ? 0 : REG_FEE);
   const contractTotal = signing + (r.tot ? r.tot.pay : r.schedule._t.pay);
 
-  document.getElementById('pdTop').innerHTML = `
+  document.getElementById('pdTop').innerHTML=`
     <tr><td class="pt-lbl">Стоимость объекта</td><td class="pt-val">${fmt(r.price)}</td></tr>
     <tr><td class="pt-lbl">Общая стоимость договора</td><td class="pt-val">${fmt(contractTotal)}</td></tr>`;
 
   const typeLabel = r.mode==='rassrochka' ? 'Рассрочка' : 'Лизинг / Аннуитет';
   const modeLabel = r.mode==='rassrochka' ?
     (r.calcMode==='commission' ? 'Комиссия' : r.calcMode==='extra' ? 'Доп.платежи' : 'Смешанный') : '';
-  document.getElementById('pdCond').innerHTML = `
+  document.getElementById('pdCond').innerHTML=`
     <tr class="pd-cond-head"><td colspan="3">Условия лизинга</td></tr>
     <tr><td class="pc-lbl">Тип графика платежей</td><td class="pc-mid"></td><td class="pc-val">${typeLabel}${modeLabel ? ' / '+modeLabel : ''}</td></tr>
     <tr class="pc-alt"><td class="pc-lbl">Срок</td><td class="pc-mid">Мес.</td><td class="pc-val">${r.term}</td></tr>
@@ -184,40 +712,44 @@ function buildPrintDoc(r){
     <tr><td class="pc-lbl">Стоимость регистрации</td><td class="pc-mid"></td><td class="pc-val">${fmt(REG_FEE)}</td></tr>
     <tr class="${r.mode==='leasing'?'pc-alt':''}"><td class="pc-lbl">Страхование на весь срок</td><td class="pc-mid">0,40%</td><td class="pc-val">${fmt(insurance)}</td></tr>`;
 
-  document.getElementById('pdSign').innerHTML = `
+  document.getElementById('pdSign').innerHTML=`
     <tr><td class="ps-lbl">Общая сумма к оплате при подписании:</td><td class="ps-val">${fmt(signing)}</td></tr>`;
 
-  document.getElementById('pdDebt').innerHTML = `
+  document.getElementById('pdDebt').innerHTML=`
     <tr><td class="pdl">Долг лизинга</td><td class="pdv">${fmt(r.debt)}</td></tr>`;
 
   if(r.mode==='rassrochka'){
-    document.getElementById('pdSchedHead').innerHTML = `<tr><th>Месяц</th><th>Оплаты</th><th>Уплате</th></tr>`;
-    const tot = r.schedule._t;
-    let rows = `<tr class="sched-sub"><td></td><td>${fmt(r.debt)}</td><td>${fmt(r.debt)}</td></tr>`;
-    rows += r.schedule.map(row => `<tr><td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.bal)}</td></tr>`).join('');
-    document.getElementById('pdSchedBody').innerHTML = rows;
-    document.getElementById('pdSchedFoot').innerHTML = `<tr><td>Итого</td><td>${fmt(tot.pay)}</td><td>—</td></tr>`;
+    document.getElementById('pdSchedHead').innerHTML=`<tr><th>Месяц</th><th>Оплаты</th><th>Уплате</th></tr>`;
+    const tot=r.schedule._t;
+    let rows=`<tr class="sched-sub"><td></td><td>${fmt(r.debt)}</td><td>${fmt(r.debt)}</td></tr>`;
+    rows+=r.schedule.map(row=>`<tr><td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.bal)}</td></tr>`).join('');
+    document.getElementById('pdSchedBody').innerHTML=rows;
+    document.getElementById('pdSchedFoot').innerHTML=`<tr><td>Итого</td><td>${fmt(tot.pay)}</td><td>—</td></tr>`;
   } else {
-    document.getElementById('pdSchedHead').innerHTML = `<tr><th>№</th><th>Платёж</th><th>Осн. долг</th><th>Проценты</th><th>Остаток долга</th></tr>`;
-    const tot = r.tot;
-    let rows = `<tr class="sched-sub"><td></td><td>${fmt(r.debt)}</td><td>${fmt(r.debt)}</td><td>${fmt(tot.intr)}</td><td>${fmt(r.debt)}</td></tr>`;
-    rows += r.schedule.map(row => `<tr><td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.princ)}</td><td>${fmt(row.intr)}</td><td>${fmt(row.bal)}</td></tr>`).join('');
-    document.getElementById('pdSchedBody').innerHTML = rows;
-    document.getElementById('pdSchedFoot').innerHTML = `<tr><td>Итого</td><td>${fmt(tot.pay)}</td><td>${fmt(tot.princ)}</td><td>${fmt(tot.intr)}</td><td>—</td></tr>`;
+    document.getElementById('pdSchedHead').innerHTML=`<tr><th>№</th><th>Платёж</th><th>Осн. долг</th><th>Проценты</th><th>Остаток долга</th></tr>`;
+    const tot=r.tot;
+    let rows=`<tr class="sched-sub"><td></td><td>${fmt(r.debt)}</td><td>${fmt(r.debt)}</td><td>${fmt(tot.intr)}</td><td>${fmt(r.debt)}</td></tr>`;
+    rows+=r.schedule.map(row=>`<tr><td>${row.n}</td><td>${fmt(row.pay)}</td><td>${fmt(row.princ)}</td><td>${fmt(row.intr)}</td><td>${fmt(row.bal)}</td></tr>`).join('');
+    document.getElementById('pdSchedBody').innerHTML=rows;
+    document.getElementById('pdSchedFoot').innerHTML=`<tr><td>Итого</td><td>${fmt(tot.pay)}</td><td>${fmt(tot.princ)}</td><td>${fmt(tot.intr)}</td><td>—</td></tr>`;
   }
 }
 
 /* ══ Client mode & Print ══ */
-function enterCM(){ if(!R){alert('Сначала нажмите «Рассчитать»');return} document.body.classList.add('cm'); }
-function exitCM(){ document.body.classList.remove('cm'); }
+function enterCM(){
+  if(!R){alert('Сначала нажмите «Рассчитать»');return}
+  document.body.classList.add('cm');
+}
+function exitCM(){document.body.classList.remove('cm')}
+
 function doPrint(){
   if(!R)return;
   buildPrintDoc(R);
-  document.getElementById('printDoc').style.display = 'block';
-  setTimeout(() => {
+  document.getElementById('printDoc').style.display='block';
+  setTimeout(()=>{
     window.print();
-    document.getElementById('printDoc').style.display = 'none';
-  }, 100);
+    document.getElementById('printDoc').style.display='none';
+  },100);
 }
 
 // инициализация
