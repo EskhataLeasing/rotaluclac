@@ -8,15 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-blue: #1a4fa0;
-            --brand-blue-light: #2563c7;
-            --brand-accent: #6c63ff;
-            --bg: #eef1f7;
-            --card: #fff;
-            --text: #0f1923;
-            --muted: #6b7a8d;
-            --border: #dde3ed;
-            --shadow: 0 2px 16px rgba(26,79,160,.08);
+            --brand-blue: #1a4fa0; --brand-blue-light: #2563c7; --brand-accent: #6c63ff;
+            --bg: #eef1f7; --card: #fff; --text: #0f1923; --muted: #6b7a8d;
+            --border: #dde3ed; --shadow: 0 2px 16px rgba(26,79,160,.08);
         }
         * { box-sizing: border-box; margin: 0; padding: 0 }
         body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh }
@@ -73,6 +67,7 @@
         .highlight-row { grid-column: 1/-1; border-radius: 12px; padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px }
         .highlight-row.comm-row { background: #f0fdf4; border: 1px solid #a7f3d0 }
         .highlight-row.extra-row { background: #fff7ed; border: 1px solid #fcd9a0 }
+        .highlight-row.reg-row { background: #f8f8ff; border: 1px solid #d0d0f0 }
         .highlight-row .cell-label { font-weight: 700; margin: 0 }
         .highlight-row .cell-value { font-size: 18px; font-weight: 800 }
         .schedule-section { margin-top: 22px }
@@ -237,15 +232,18 @@
             ru: { obj_price: 'Стоимость объекта', advance_pct: 'Аванс (%)', term_months: 'Срок (мес.)',
                 calc_btn: 'Рассчитать', client_btn: 'Режим для клиента',
                 empty_hint: 'Введите параметры и нажмите «Рассчитать»',
-                schedule_title: 'График платежей', print_btn: '🖨 Распечатать', exit_client: '← Назад' },
+                schedule_title: 'График платежей', print_btn: '🖨 Распечатать', exit_client: '← Назад',
+                reg_label: 'Регистрационный сбор' },
             uz: { obj_price: "Ob'ekt narxi", advance_pct: 'Avans (%)', term_months: 'Muddat (oy)',
                 calc_btn: 'Hisoblash', client_btn: 'Mijoz rejimi',
                 empty_hint: 'Parametrlarni kiriting va "Hisoblash" ni bosing',
-                schedule_title: "To'lov jadvali", print_btn: '🖨 Chop etish', exit_client: '← Orqaga' },
+                schedule_title: "To'lov jadvali", print_btn: '🖨 Chop etish', exit_client: '← Orqaga',
+                reg_label: "Ro'yxatdan o'tkazish to'lovi" },
             en: { obj_price: 'Object price', advance_pct: 'Advance (%)', term_months: 'Term (months)',
                 calc_btn: 'Calculate', client_btn: 'Client mode',
                 empty_hint: 'Enter parameters and click "Calculate"',
-                schedule_title: 'Payment schedule', print_btn: '🖨 Print', exit_client: '← Back' }
+                schedule_title: 'Payment schedule', print_btn: '🖨 Print', exit_client: '← Back',
+                reg_label: 'Registration fee' }
         };
         let lang = 'ru';
         function t(k) { return L[lang][k] || k; }
@@ -256,7 +254,6 @@
             if (lastResult) renderResults(lastResult);
         }
 
-        /* режимы */
         let productType = 'rassrochka';
         let calcMode = 'commission';
         let lastResult = null;
@@ -282,21 +279,18 @@
             document.getElementById('actionBtns').classList.remove('visible');
         }
 
-        /* утилиты */
         function formatInput(el) { const r = el.value.replace(/[^\d]/g, ''); el.value = r ? Number(r).toLocaleString('ru-RU') : ''; }
         function parseVal(s) { return parseFloat(String(s).replace(/[^\d.]/g, '')) || 0; }
         function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
         function fmtPct(n) { return (n * 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'; }
         function ceilTo(v, step) { return Math.ceil((v + 1e-9) / step) * step; }
 
-        /* константы */
         const LEASING_RATE = 0.2975;
         const FIXED_COMM = 0.025;
         const TARGET_IRR_ANNUAL = 0.32;
         const TARGET_MONTHLY = TARGET_IRR_ANNUAL / 12;
         const REG_FEE = 5800498;
 
-        /* математика */
         function calcIRR(cfs) {
             let lo = -0.9999, hi = 50;
             let flo = 0, fhi = 0;
@@ -338,10 +332,11 @@
         }
 
         function solveRassrochka(price, advance, debt, term) {
-            const makeCF0 = (margin) => advance - price + (margin * price) / 1.12 - REG_FEE;
+            // Без регистрационного сбора (как в макросе)
+            const makeCF0 = (margin) => advance - price + (margin * price) / 1.12;
             let margin = 0, extra = 0;
             if (calcMode === 'commission') {
-                let lo = 0, hi = 1, mid;
+                let lo = 0, hi = 0.5, mid;
                 for (let it = 0; it < 40; it++) {
                     mid = (lo + hi) / 2;
                     const cfs = [makeCF0(mid)];
@@ -351,7 +346,7 @@
                     if (Math.abs(r - TARGET_MONTHLY) < 0.0001) break;
                     if (r > TARGET_MONTHLY) lo = mid; else hi = mid;
                 }
-                margin = ceilTo(mid, 0.001);
+                margin = Math.min(0.5, ceilTo(mid, 0.001));
             } else if (calcMode === 'extra') {
                 let lo = 0, hi = 100000000, mid;
                 for (let it = 0; it < 40; it++) {
@@ -396,7 +391,6 @@
             return rows;
         }
 
-        /* основной расчёт */
         function calculate() {
             const price = parseVal(document.getElementById('price').value);
             const advPct = parseVal(document.getElementById('advPct').value) / 100;
@@ -410,21 +404,21 @@
                 const schedule = buildLeasingSchedule(debt, term);
                 const tot = schedule._totals;
                 const flatRate = tot.intr && debt > 0 && term > 0 ? tot.intr / (debt * term / 12) : 0;
-                const totalPay = advance + tot.pay;
-                lastResult = { type: 'leasing', price, advPct, advance, debt, term, commPct: FIXED_COMM, commAmt, schedule, flatRate, totalPay, tot };
+                const totalPay = advance + tot.pay + commAmt + REG_FEE;
+                lastResult = { type: 'leasing', price, advPct, advance, debt, term, commPct: FIXED_COMM, commAmt, schedule, flatRate, totalPay, tot, regFee: REG_FEE };
             } else {
                 if (advPct <= 0 || advPct >= 1) { alert('Аванс должен быть от 1 до 99%'); return; }
                 const advance = price * advPct;
                 const debt = price - advance;
                 const sol = solveRassrochka(price, advance, debt, term);
                 const schedule = buildRassrochkaSchedule(debt, term, sol.extra);
-                const totalPay = advance + schedule._totals.pay + sol.margin * price;
-                lastResult = { type: 'rassrochka', price, advPct, advance, debt, term, margin: sol.margin, extra: sol.extra, commAmt: sol.margin * price, schedule, totalPay };
+                const commAmt = sol.margin * price;
+                const totalPay = advance + schedule._totals.pay + commAmt + REG_FEE;
+                lastResult = { type: 'rassrochka', price, advPct, advance, debt, term, margin: sol.margin, extra: sol.extra, commAmt, schedule, totalPay, regFee: REG_FEE };
             }
             renderResults(lastResult);
         }
 
-        /* отрисовка */
         function renderResults(r) {
             let cards = '', schedHead = '', schedBody = '', schedFoot = '';
             if (r.type === 'leasing') {
@@ -435,6 +429,7 @@
                         <div class="result-cell full"><div class="cell-label">Общая сумма оплаты</div><div class="cell-value">${fmt(r.totalPay)}</div></div>
                         <div class="result-cell"><div class="cell-label">Ставка лизинга</div><div class="cell-value">${fmtPct(r.flatRate)}</div></div>
                         <div class="highlight-row comm-row"><div class="cell-label">Комиссия за оформление</div><div class="cell-value">${fmtPct(r.commPct)}</div><div>${fmt(r.commAmt)}</div></div>
+                        <div class="highlight-row reg-row"><div class="cell-label">${t('reg_label')}</div><div class="cell-value">${fmt(r.regFee)}</div></div>
                     </div>`;
                 schedHead = `<tr><th>№</th><th>Платёж</th><th>Осн. долг</th><th>Проценты</th><th>Остаток</th></tr>`;
                 r.schedule.forEach(row => {
@@ -449,6 +444,7 @@
                         <div class="result-cell full"><div class="cell-label">Общая сумма оплаты</div><div class="cell-value">${fmt(r.totalPay)}</div></div>
                         <div class="highlight-row comm-row"><div class="cell-label">Комиссия за оформление</div><div class="cell-value">${fmtPct(r.margin)}</div><div>${fmt(r.commAmt)}</div></div>
                         ${r.extra > 0 ? `<div class="highlight-row extra-row"><div class="cell-label">Ежемесячный доп. платёж</div><div class="cell-value">${fmt(r.extra)}</div></div>` : ''}
+                        <div class="highlight-row reg-row"><div class="cell-label">${t('reg_label')}</div><div class="cell-value">${fmt(r.regFee)}</div></div>
                     </div>`;
                 schedHead = `<tr><th>№</th><th>Сумма платежа</th><th>Остаток долга</th></tr>`;
                 r.schedule.forEach(row => {
@@ -471,10 +467,17 @@
             if (!lastResult) return;
             const r = lastResult;
             const comm = r.type === 'leasing' ? r.commAmt : r.commAmt;
-            const sign = r.advance + comm;
+            const sign = r.advance + comm + (r.regFee || 0);
             const contractTotal = sign + (r.tot ? r.tot.pay : r.schedule._totals.pay);
             document.getElementById('pdTop').innerHTML = `<tr><td class="pt-lbl">Стоимость объекта</td><td class="pt-val">${fmt(r.price)}</td></tr><tr><td class="pt-lbl">Общая стоимость договора</td><td class="pt-val">${fmt(contractTotal)}</td></tr>`;
-            document.getElementById('pdCond').innerHTML = `<tr class="pd-cond-head"><td colspan="3">Условия</td></tr><tr><td class="pc-lbl">Тип</td><td></td><td class="pc-val">${r.type==='leasing'?'Аннуитет':'Рассрочка'}</td></tr><tr class="pc-alt"><td class="pc-lbl">Срок</td><td>Мес.</td><td class="pc-val">${r.term}</td></tr>${r.type==='leasing'?`<tr><td class="pc-lbl">Ставка</td><td></td><td class="pc-val">${fmtPct(r.flatRate)}</td></tr>`:''}<tr class="${r.type==='leasing'?'pc-alt':''}"><td class="pc-lbl">Аванс</td><td>${(r.advPct*100).toFixed(0)}%</td><td class="pc-val">${fmt(r.advance)}</td></tr><tr><td class="pc-lbl">Комиссия</td><td>${r.type==='leasing'?fmtPct(r.commPct):fmtPct(r.margin)}</td><td class="pc-val">${fmt(comm)}</td></tr>`;
+            document.getElementById('pdCond').innerHTML = `
+                <tr class="pd-cond-head"><td colspan="3">Условия</td></tr>
+                <tr><td class="pc-lbl">Тип</td><td></td><td class="pc-val">${r.type==='leasing'?'Аннуитет':'Рассрочка'}</td></tr>
+                <tr class="pc-alt"><td class="pc-lbl">Срок</td><td>Мес.</td><td class="pc-val">${r.term}</td></tr>
+                ${r.type==='leasing'?`<tr><td class="pc-lbl">Ставка</td><td></td><td class="pc-val">${fmtPct(r.flatRate)}</td></tr>`:''}
+                <tr class="${r.type==='leasing'?'pc-alt':''}"><td class="pc-lbl">Аванс</td><td>${(r.advPct*100).toFixed(0)}%</td><td class="pc-val">${fmt(r.advance)}</td></tr>
+                <tr><td class="pc-lbl">Комиссия</td><td>${r.type==='leasing'?fmtPct(r.commPct):fmtPct(r.margin)}</td><td class="pc-val">${fmt(comm)}</td></tr>
+                <tr class="pc-alt"><td class="pc-lbl">Регистрация</td><td></td><td class="pc-val">${fmt(r.regFee||0)}</td></tr>`;
             document.getElementById('pdSign').innerHTML = `<tr><td class="ps-lbl">К оплате при подписании</td><td class="ps-val">${fmt(sign)}</td></tr>`;
             document.getElementById('pdDebt').innerHTML = `<tr><td class="pdl">Долг лизинга</td><td class="pdv">${fmt(r.debt)}</td></tr>`;
             document.getElementById('pdSchedHead').innerHTML = r.type==='leasing'?`<tr><th>№</th><th>Платёж</th><th>Осн. долг</th><th>Проценты</th><th>Остаток</th></tr>`:`<tr><th>№</th><th>Платёж</th><th>Остаток</th></tr>`;
